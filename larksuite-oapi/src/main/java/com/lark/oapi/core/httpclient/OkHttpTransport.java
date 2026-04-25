@@ -106,3 +106,55 @@ public class OkHttpTransport implements IHttpTransport {
 
     }
 }
+Client client=Client.newBuilder("appId","appSecret") // 默认配置为自建应用
+    .marketplaceApp() // 设置应用类型为商店应用
+    .openBaseUrl(BaseUrlEnum.FeiShu) // 设置域名，默认为飞书
+    .helpDeskCredential("helpDeskId","helpDeskSecret") // 服务台应用才需要设置
+    .requestTimeout(3,TimeUnit.SECONDS) // 设置httpclient 超时时间，默认永不超时
+    .logReqAtDebug(true) // 在 debug 模式下会打印 http 请求和响应的 headers、body 等信息。
+    .build();
+public enum BaseUrlEnum {
+  FeiShu("https://open.feishu.cn"),
+  LarkSuite("https://open.larksuite.com"),
+  ;
+}
+import com.lark.oapi.Client;
+import com.lark.oapi.core.request.RequestOptions;
+import com.lark.oapi.core.utils.Jsons;
+import com.lark.oapi.core.utils.Lists;
+import com.lark.oapi.service.docx.v1.model.CreateDocumentReq;
+import com.lark.oapi.service.docx.v1.model.CreateDocumentReqBody;
+import com.lark.oapi.service.docx.v1.model.CreateDocumentResp;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+public class DocxSample {
+  public static void main(String arg[]) throws Exception {
+    // 创建 API Client。你需在此传入你的应用的实际 App ID 和 App Secret
+    Client client = Client.newBuilder("appId", "appSecret").build();
+    // 设置自定义请求头
+    Map<String, List<String>> headers = new HashMap<>();
+    headers.put("key1", Lists.newArrayList("value1"));
+    headers.put("key2", Lists.newArrayList("value2"));
+    // 发起请求
+    CreateDocumentResp resp = client.docx().document()
+        .create(CreateDocumentReq.newBuilder()
+                .createDocumentReqBody(CreateDocumentReqBody.newBuilder()
+                    .title("title")   // 文档标题
+                    .folderToken("")  // 文件夹 token，传空表示在根目录创建文档
+                    .build())
+                .build()
+            , RequestOptions.newBuilder()
+                .userAccessToken("u-2GxFH7ysh8E9lj9UJp8XAG0k0gh1h5KzM800khEw2G6e") // 传递用户token
+                .headers(headers) // 传递自定义请求头
+                .build());
+    // 处理服务端错误
+    if (!resp.success()) {
+      System.out.println(String.format("code:%s,msg:%s,reqId:%s"
+          , resp.getCode(), resp.getMsg(), resp.getRequestId()));
+      return;
+    }
+    // 业务数据处理
+    System.out.println(Jsons.DEFAULT.toJson(resp.getData()));
+  }
+}
